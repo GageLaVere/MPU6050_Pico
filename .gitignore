@@ -1,0 +1,11 @@
+build
+.vscode/*
+.build/*
+cmake-build-*/
+
+*.uf2
+*.elf
+*.bin
+*.hex
+*.map
+*.dis
