@@ -35,31 +35,31 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(MPU6050_tests
-    examples/MPU6050_tests.c
+add_executable(MPU6050_example
+    examples/MPU6050_example.c
     MPU6050.c )
 
-pico_set_program_name(MPU6050_tests "MPU6050_tests")
-pico_set_program_version(MPU6050_tests "0.1")
+pico_set_program_name(MPU6050_example "MPU6050_example")
+pico_set_program_version(MPU6050_example "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(MPU6050_tests 0)
-pico_enable_stdio_usb(MPU6050_tests 1)
+pico_enable_stdio_uart(MPU6050_example 0)
+pico_enable_stdio_usb(MPU6050_example 1)
 
 # Add the standard library to the build
-target_link_libraries(MPU6050_tests
+target_link_libraries(MPU6050_example
         pico_stdlib)
 
 # Add the standard include files to the build
-target_include_directories(MPU6050_tests PRIVATE
+target_include_directories(MPU6050_example PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
 )
 
 # Add any user requested libraries
-target_link_libraries(MPU6050_tests 
+target_link_libraries(MPU6050_example 
         hardware_i2c
         
         )
 
-pico_add_extra_outputs(MPU6050_tests)
+pico_add_extra_outputs(MPU6050_example)
 
