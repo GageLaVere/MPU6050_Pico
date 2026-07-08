@@ -30,6 +30,15 @@
 #define MPU6050_ACCEL_ZOUT_H_REG 0x3F
 #define MPU6050_ACCEL_ZOUT_L_REG 0x40
 
+#define MPU6050_GYRO_XOUT_H_REG 0x43
+#define MPU6050_GYRO_XOUT_L_REG 0x44
+
+#define MPU6050_GYRO_YOUT_H_REG 0x45
+#define MPU6050_GYRO_YOUT_L_REG 0x46
+
+#define MPU6050_GYRO_ZOUT_H_REG 0x47
+#define MPU6050_GYRO_ZOUT_L_REG 0x48
+
 /*! \brief Defines MPU6050 status codes
  * 
  * \sa mpu6050_status_t
@@ -64,6 +73,13 @@ extern const char *MPU6050_STATUS_STRINGS[MPU6050_STATUS_COUNT];
 */
 int mpu6050_read_accel_raw(i2c_inst_t *i2c_inst, mpu6050_vec16_t *accel);
 
+/*! \brief Function which reads all 3 accels on the MPU6050
+ *
+ * \sa mpu6050_init
+ * \param i2c_inst Pico2W i2c instance
+ * \param accel    MPU6050 gyro instance
+*/
+int mpu6050_read_gyro_raw(i2c_inst_t *i2c_inst, mpu6050_vec16_t *gyro);
 
 /*! \brief Function which initializes the MPU6050
  *

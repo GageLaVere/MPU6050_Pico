@@ -74,6 +74,19 @@ int main(){
             printf("Accel raw: X=%d Y=%d Z=%d\n", accel.x, accel.y, accel.z);
         }
 
+        mpu6050_vec16_t gyro = {0};
+
+        int gyro_status = mpu6050_read_gyro_raw(I2C_PORT, &gyro);
+
+        if (gyro_status != MPU6050_OK) {
+            printf("MPU6050 Gyro read error: %s (%d)\n",
+                    MPU6050_STATUS_STRINGS[gyro_status],
+                    gyro_status);
+        } else{
+            printf("Gyro raw: X=%d Y=%d Z=%d\n", gyro.x, gyro.y, gyro.z);
+        }
+
+
         sleep_ms(1000);
     }
 }

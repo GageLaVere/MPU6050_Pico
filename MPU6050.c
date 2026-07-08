@@ -111,6 +111,30 @@ int mpu6050_read_accel_raw(i2c_inst_t *i2c_inst, mpu6050_vec16_t *accel)
     return MPU6050_OK;
 }
 
+int mpu6050_read_gyro_raw(i2c_inst_t *i2c_inst, mpu6050_vec16_t *gyro){
+
+    if (gyro==NULL)
+        return MPU6050_NULL_PTR_ERROR;
+
+    uint8_t gyro_data[6] = {0};
+
+    int status = mpu6050_read_regs(
+        i2c_inst,
+        MPU6050_GYRO_XOUT_H_REG,
+        gyro_data,
+        sizeof(gyro_data)
+    );
+
+    if (status != MPU6050_OK){
+        return status;
+    }
+
+    gyro->x = (int16_t)(((uint16_t)gyro_data[0] << 8) | gyro_data[1]);
+    gyro->y = (int16_t)(((uint16_t)gyro_data[2] << 8) | gyro_data[3]);
+    gyro->z = (int16_t)(((uint16_t)gyro_data[4] << 8) | gyro_data[5]);
+
+    return MPU6050_OK;
+}
 /*! \brief General use function to write to an MPU6050 Register
  *
  * \sa mpu6050_write_reg
