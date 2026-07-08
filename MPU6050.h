@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
 
@@ -15,10 +16,19 @@
 
 #define MPU6050_WHOAMI_REG 0x75
 
+#define MPU6050_SMPLRATE_REG 0x19
+
 #define MPU6050_TEMPH_REG 0x41
 #define MPU6050_TEMPL_REG 0x42
 
-#define MPU6050_SMPLRATE_REG 0x19
+#define MPU6050_ACCEL_XOUT_H_REG 0x3B
+#define MPU6050_ACCEL_XOUT_L_REG 0x3C
+
+#define MPU6050_ACCEL_YOUT_H_REG 0x3D
+#define MPU6050_ACCEL_YOUT_L_REG 0x3E
+
+#define MPU6050_ACCEL_ZOUT_H_REG 0x3F
+#define MPU6050_ACCEL_ZOUT_L_REG 0x40
 
 /*! \brief Defines MPU6050 status codes
  * 
@@ -33,11 +43,27 @@ typedef enum {
     MPU6050_STATUS_COUNT
 } mpu6050_status_t;
 
+typedef struct {
+    int16_t x;
+    int16_t y;
+    int16_t z;
+} mpu6050_vec16_t;
+
 /*! \brief Defines MPU6050 status strings
  * 
  * \sa MPU6050_STATUS_STRINGS
 */
 extern const char *MPU6050_STATUS_STRINGS[MPU6050_STATUS_COUNT];
+
+
+/*! \brief Function which reads all 3 accels on the MPU6050
+ *
+ * \sa mpu6050_init
+ * \param i2c_inst Pico2W i2c instance
+ * \param accel    MPU6050 accel instance
+*/
+int mpu6050_read_accel_raw(i2c_inst_t *i2c_inst, mpu6050_vec16_t *accel);
+
 
 /*! \brief Function which initializes the MPU6050
  *
@@ -65,7 +91,7 @@ int mpu6050_read_who_am_i(i2c_inst_t *i2c_inst, uint8_t *who_am_i);
  *  \param i2c_inst Pico2W i2c instance
  *  \return Status returned by MPU6050 driver
  */
-int mpu6050_read_temp(i2c_inst_t *i2c_inst, int16_t *mpu_temp);
+int mpu6050_read_temp(i2c_inst_t *i2c_inst, float *mpu_temp);
 
 /*! \brief Reads raw temperature sensor value from MPU6050
  *  \sa     mpu6050_read_temp_raw

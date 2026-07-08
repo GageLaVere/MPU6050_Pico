@@ -41,7 +41,7 @@ int main(){
         
         }
     
-        int16_t mpu_temp = 0.0f;
+        float mpu_temp = 0.0f;
         int mpu_temp_status = mpu6050_read_temp(I2C_PORT, &mpu_temp);
 
         if (mpu_temp_status != MPU6050_OK) 
@@ -61,11 +61,22 @@ int main(){
             printf("MPU6050 Raw Temp: %d\n", mpu_raw_temp);
         
         }
-    
+
+        mpu6050_vec16_t accel = {0};
+
+        int accel_status = mpu6050_read_accel_raw(I2C_PORT, &accel);
+
+        if (accel_status != MPU6050_OK) {
+            printf("MPU6050 accel read error: %s (%d)\n",
+                MPU6050_STATUS_STRINGS[accel_status],
+                accel_status);
+        } else {
+            printf("Accel raw: X=%d Y=%d Z=%d\n", accel.x, accel.y, accel.z);
+        }
+
         sleep_ms(1000);
     }
 }
-
 
 
 static void init_i2c(void){

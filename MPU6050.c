@@ -5,6 +5,7 @@
 #include "MPU6050.h"
 static int mpu6050_write_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t value);
 static int mpu6050_read_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *resp);
+static int mpu6050_read_regs(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *data, size_t len);
 
 const char *MPU6050_STATUS_STRINGS[MPU6050_STATUS_COUNT] = {
     "!OK",
@@ -43,51 +44,69 @@ int mpu6050_read_smplrate(i2c_inst_t *i2c_inst, uint8_t *smplrate){
 }
 
 
-int mpu6050_read_temp_raw(i2c_inst_t *i2c_inst, int16_t *raw_temp){
-
-    uint8_t temp_h = 0;
-    uint8_t temp_l = 0;
-
+int mpu6050_read_temp_raw(i2c_inst_t *i2c_inst, int16_t *raw_temp)
+{
     if (raw_temp == NULL)
         return MPU6050_NULL_PTR_ERROR;
 
-    int status = mpu6050_read_reg(i2c_inst, MPU6050_TEMPH_REG, &temp_h);
+
+    uint8_t temp_data[2] = {0};
+
+    int status = mpu6050_read_regs(
+        i2c_inst,
+        MPU6050_TEMPH_REG,
+        temp_data,
+        sizeof(temp_data)
+    );
 
     if (status != MPU6050_OK)
         return status;
 
-    status = mpu6050_read_reg(i2c_inst, MPU6050_TEMPL_REG, &temp_l);
 
-    if (status != MPU6050_OK)
-        return status;
-
-    //defined on page 31 of MPU reference doc
-    *raw_temp = ((int16_t) ((temp_h) << 8 | temp_l)/340.0f)+ 36.53;
+    *raw_temp = (int16_t)(((uint16_t)temp_data[0] << 8) | temp_data[1]);
 
     return MPU6050_OK;
 }
 
-
-int mpu6050_read_temp(i2c_inst_t *i2c_inst, int16_t *mpu_temp){
-
-    uint8_t temp_h = 0;
-    uint8_t temp_l = 0;
+int mpu6050_read_temp(i2c_inst_t *i2c_inst, float *mpu_temp){
 
     if (mpu_temp == NULL)
         return MPU6050_NULL_PTR_ERROR;
 
-    int status = mpu6050_read_reg(i2c_inst, MPU6050_TEMPH_REG, &temp_h);
+    int16_t raw_temp = 0;
+
+    int status = mpu6050_read_temp_raw(i2c_inst, &raw_temp);
 
     if (status != MPU6050_OK)
         return status;
 
-    status = mpu6050_read_reg(i2c_inst, MPU6050_TEMPL_REG, &temp_l);
+    *mpu_temp = ((float)raw_temp / 340.0f) + 36.53f;
 
-    if (status != MPU6050_OK)
+    return MPU6050_OK;
+}
+
+int mpu6050_read_accel_raw(i2c_inst_t *i2c_inst, mpu6050_vec16_t *accel)
+{
+    if (accel == NULL) {
+        return MPU6050_NULL_PTR_ERROR;
+    }
+
+    uint8_t accel_data[6] = {0};
+
+    int status = mpu6050_read_regs(
+        i2c_inst,
+        MPU6050_ACCEL_XOUT_H_REG,
+        accel_data,
+        sizeof(accel_data)
+    );
+
+    if (status != MPU6050_OK) {
         return status;
+    }
 
-    //no conversion math
-    *mpu_temp = ((temp_h) << 8 | temp_l);
+    accel->x = (int16_t)(((uint16_t)accel_data[0] << 8) | accel_data[1]);
+    accel->y = (int16_t)(((uint16_t)accel_data[2] << 8) | accel_data[3]);
+    accel->z = (int16_t)(((uint16_t)accel_data[4] << 8) | accel_data[5]);
 
     return MPU6050_OK;
 }
@@ -152,6 +171,44 @@ static int mpu6050_read_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *resp){
     if (byte_count != 1) {
         return MPU6050_READ_ERROR;
     }
+
+    return MPU6050_OK;
+}
+
+/*! \brief General use function to read from an MPU6050 Register
+ *
+ * \sa mpu6050_read_reg
+ * \param i2c_inst Pico2W i2c instance
+ * \param reg MPU6050 Register which is read from
+*/
+static int mpu6050_read_regs(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *data, size_t len){
+    
+    if (i2c_inst == NULL || data == NULL || len == 0) 
+        return MPU6050_NULL_PTR_ERROR;
+
+
+    int status = i2c_write_blocking(
+        i2c_inst,
+        MPU6050_DEFAULT_I2C_ADDRESS,
+        &reg,
+        1,
+        true
+    );
+
+    if (status != 1)
+        return MPU6050_WRITE_ERROR;
+
+
+    status = i2c_read_blocking(
+        i2c_inst,
+        MPU6050_DEFAULT_I2C_ADDRESS,
+        data,
+        len,
+        false
+    );
+
+    if (status != (int)len)
+        return MPU6050_READ_ERROR;
 
     return MPU6050_OK;
 }
