@@ -60,12 +60,19 @@ int mpu6050_init(i2c_inst_t *i2c_inst);
 int mpu6050_read_who_am_i(i2c_inst_t *i2c_inst, uint8_t *who_am_i);
 
 
-/*! \brief Reads temperature sensor on MPU6050
+/*! \brief Reads temperature sensor on MPU6050, converted to degrees C
+ *  \sa     mpu6050_read_temp
+ *  \param i2c_inst Pico2W i2c instance
+ *  \return Status returned by MPU6050 driver
+ */
+int mpu6050_read_temp(i2c_inst_t *i2c_inst, int16_t *mpu_temp);
+
+/*! \brief Reads raw temperature sensor value from MPU6050
  *  \sa     mpu6050_read_temp_raw
  *  \param i2c_inst Pico2W i2c instance
  *  \return Status returned by MPU6050 driver
  */
-int mpu6050_read_temp(i2c_inst_t *i2c_inst, float *mpu_temp);
+int mpu6050_read_temp_raw(i2c_inst_t *i2c_inst, int16_t *raw_temp);
 
 /*! \brief Reads Sample Rate register 
  * 

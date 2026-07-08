@@ -15,7 +15,6 @@ const char *MPU6050_STATUS_STRINGS[MPU6050_STATUS_COUNT] = {
 };
 
 
-
 int mpu6050_init(i2c_inst_t *i2c_inst){
 
     int status = mpu6050_write_reg(
@@ -44,7 +43,32 @@ int mpu6050_read_smplrate(i2c_inst_t *i2c_inst, uint8_t *smplrate){
 }
 
 
-int mpu6050_read_temp(i2c_inst_t *i2c_inst, float *mpu_temp){
+int mpu6050_read_temp_raw(i2c_inst_t *i2c_inst, int16_t *raw_temp){
+
+    uint8_t temp_h = 0;
+    uint8_t temp_l = 0;
+
+    if (raw_temp == NULL)
+        return MPU6050_NULL_PTR_ERROR;
+
+    int status = mpu6050_read_reg(i2c_inst, MPU6050_TEMPH_REG, &temp_h);
+
+    if (status != MPU6050_OK)
+        return status;
+
+    status = mpu6050_read_reg(i2c_inst, MPU6050_TEMPL_REG, &temp_l);
+
+    if (status != MPU6050_OK)
+        return status;
+
+    //defined on page 31 of MPU reference doc
+    *raw_temp = ((int16_t) ((temp_h) << 8 | temp_l)/340.0f)+ 36.53;
+
+    return MPU6050_OK;
+}
+
+
+int mpu6050_read_temp(i2c_inst_t *i2c_inst, int16_t *mpu_temp){
 
     uint8_t temp_h = 0;
     uint8_t temp_l = 0;
@@ -62,12 +86,11 @@ int mpu6050_read_temp(i2c_inst_t *i2c_inst, float *mpu_temp){
     if (status != MPU6050_OK)
         return status;
 
-    //defined on page 31 of MPU reference doc
-    *mpu_temp = ((int16_t) ((temp_h) << 8 | temp_l)/340.0f)+ 36.53;
+    //no conversion math
+    *mpu_temp = ((temp_h) << 8 | temp_l);
 
     return MPU6050_OK;
 }
-
 
 /*! \brief General use function to write to an MPU6050 Register
  *

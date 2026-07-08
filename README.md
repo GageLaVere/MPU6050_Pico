@@ -3,7 +3,7 @@
 ## Overview
 
 ```
-This library is a low-level driver for the MPU6050 device.
+This library is a low-level driver for the MPU6050 Intertial Measurement Unit.
 
 A working list of implemented functions is in the "Function Table" section.
 
@@ -75,7 +75,7 @@ Current status strings are intended to be easy to transmit later over USB or ano
 | `mpu6050_read_who_am_i()`           | `WHO_AM_I`                            | Implemented | Reads the device identity register through an output pointer     |
 | `mpu6050_read_smplrate()`           | `SMPLRT_DIV`                          | Implemented | Reads the sample-rate divider register through an output pointer |
 | `mpu6050_read_temp()`               | `TEMP_OUT_H`, `TEMP_OUT_L`            | Implemented | Reads temperature registers and returns converted degrees C      |
-| `mpu6050_read_temp_raw()`           | `TEMP_OUT_H`, `TEMP_OUT_L`            | Planned     | Reads raw temperature output                                     |
+| `mpu6050_read_temp_raw()`           | `TEMP_OUT_H`, `TEMP_OUT_L`            | Implemented | Reads raw temperature output                                     |
 | `mpu6050_set_accel_range()`         | `ACCEL_CONFIG`                        | Planned     | Sets accelerometer full-scale range                              |
 | `mpu6050_set_gyro_range()`          | `GYRO_CONFIG`                         | Planned     | Sets gyroscope full-scale range                                  |
 | `mpu6050_read_accel_raw()`          | `ACCEL_XOUT_H` through `ACCEL_ZOUT_L` | Planned     | Reads raw 16-bit accelerometer values                            |

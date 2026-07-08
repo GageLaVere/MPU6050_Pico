@@ -8,7 +8,7 @@
 #define I2C_PORT i2c0
 #define I2C_SDA 8
 #define I2C_SCL 9
-static void init_i2c();
+static void init_i2c(void);
 
 
 
@@ -41,13 +41,24 @@ int main(){
         
         }
     
-        float mpu_temp = 0.0f;
+        int16_t mpu_temp = 0.0f;
         int mpu_temp_status = mpu6050_read_temp(I2C_PORT, &mpu_temp);
 
         if (mpu_temp_status != MPU6050_OK) 
             printf("MPU6050 Temp read error: %s (%d)\n", MPU6050_STATUS_STRINGS[mpu_temp_status], mpu_temp_status);
         else{
             printf("MPU6050 Temp: %.2f\n", mpu_temp);
+        
+        }
+
+        int16_t mpu_raw_temp = 0;
+
+        int raw_mpu_temp_status = mpu6050_read_temp_raw(I2C_PORT, &mpu_raw_temp);
+
+        if (raw_mpu_temp_status != MPU6050_OK) 
+            printf("MPU6050 Raw Temp read error: %s (%d)\n", MPU6050_STATUS_STRINGS[raw_mpu_temp_status], raw_mpu_temp_status);
+        else{
+            printf("MPU6050 Raw Temp: %d\n", mpu_raw_temp);
         
         }
     
