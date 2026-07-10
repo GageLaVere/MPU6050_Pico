@@ -39,6 +39,58 @@
 #define MPU6050_GYRO_ZOUT_H_REG 0x47
 #define MPU6050_GYRO_ZOUT_L_REG 0x48
 
+#define MPU6050_ACCEL_CONFIG_REG 0x1C
+#define MPU6050_GYRO_CONFIG_REG  0x1B
+
+#define MPU6050_ACCEL_RANGE_2G   0
+#define MPU6050_ACCEL_RANGE_4G   1
+#define MPU6050_ACCEL_RANGE_8G   2
+#define MPU6050_ACCEL_RANGE_16G  3
+
+#define MPU6050_GYRO_RANGE_250DPS   0
+#define MPU6050_GYRO_RANGE_500DPS   1
+#define MPU6050_GYRO_RANGE_1000DPS  2
+#define MPU6050_GYRO_RANGE_2000DPS  3
+
+#define MPU6050_ACCEL_CONFIG_AFS_SEL_SHIFT 3
+#define MPU6050_ACCEL_CONFIG_AFS_SEL_MASK  0x18
+
+#define MPU6050_GYRO_CONFIG_FS_SEL_SHIFT 3
+#define MPU6050_GYRO_CONFIG_FS_SEL_MASK  0x18
+
+
+/*! \brief Function which sets the accel range to: ±2g, ±4g, ±8g, ±16g
+ *  Intended to be used with #defined ranges
+ * \sa mpu6050_init
+ * \param i2c_inst Pico2W i2c instance
+ * \param accel    MPU6050 accel instance
+*/
+int mpu6050_set_accel_range(i2c_inst_t *i2c_inst, uint8_t range);
+
+/*! \brief Function which sets the gyro range ±250, ±500, ±1000, ±2000 deg/s
+ *  Intended to be used with #defined ranges
+ * \sa mpu6050_init
+ * \param i2c_inst Pico2W i2c instance
+ * \param accel    MPU6050 gyro instance
+*/
+int mpu6050_set_gyro_range(i2c_inst_t *i2c_inst, uint8_t range);
+
+/*! \brief Function which reads the accel range
+ *  
+ * \sa mpu6050_init
+ * \param i2c_inst Pico2W i2c instance
+ * \param accel    MPU6050 accel instance
+*/
+int mpu6050_read_accel_config(i2c_inst_t *i2c_inst, uint8_t *config);
+
+/*! \brief Function which reads the gyro range
+ * 
+ * \sa mpu6050_init
+ * \param i2c_inst Pico2W i2c instance
+ * \param accel    MPU6050 gyro instance
+*/
+int mpu6050_read_gyro_config(i2c_inst_t *i2c_inst, uint8_t *config);
+
 /*! \brief Defines MPU6050 status codes
  * 
  * \sa mpu6050_status_t

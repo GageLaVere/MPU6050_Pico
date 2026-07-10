@@ -111,6 +111,94 @@ int mpu6050_read_accel_raw(i2c_inst_t *i2c_inst, mpu6050_vec16_t *accel)
     return MPU6050_OK;
 }
 
+int mpu6050_set_accel_range(i2c_inst_t *i2c_inst, uint8_t range){
+
+    if (range > MPU6050_ACCEL_RANGE_16G){
+        return MPU6050_READ_ERROR;
+    }
+
+    uint8_t config = 0;
+
+    int status = mpu6050_read_reg(
+        i2c_inst,
+        MPU6050_ACCEL_CONFIG_REG,
+        &config
+    );
+
+    if (status != MPU6050_OK) {
+        return status;
+    }
+
+    config &= ~MPU6050_ACCEL_CONFIG_AFS_SEL_MASK;
+
+    config |= (range << MPU6050_ACCEL_CONFIG_AFS_SEL_SHIFT);
+
+    status = mpu6050_write_reg(
+        i2c_inst,
+        MPU6050_ACCEL_CONFIG_REG,
+        config
+    );
+
+    if (status != MPU6050_OK) {
+        return status;
+    }
+
+    return MPU6050_OK;
+}
+
+int mpu6050_set_gyro_range(i2c_inst_t *i2c_inst, uint8_t range){
+
+    if (range > MPU6050_GYRO_RANGE_2000DPS){
+        return MPU6050_READ_ERROR;
+    }
+
+    uint8_t config = 0;
+
+    int status = mpu6050_read_reg(
+        i2c_inst,
+        MPU6050_GYRO_CONFIG_REG,
+        &config
+    );
+
+    if (status != MPU6050_OK) {
+        return status;
+    }
+
+    config &= ~MPU6050_GYRO_CONFIG_FS_SEL_MASK;
+
+    config |= (range << MPU6050_GYRO_CONFIG_FS_SEL_SHIFT);
+
+    status = mpu6050_write_reg(
+        i2c_inst,
+        MPU6050_GYRO_CONFIG_REG,
+        config
+    );
+
+    if (status != MPU6050_OK) {
+        return status;
+    }
+
+    return MPU6050_OK;
+}
+
+int mpu6050_read_accel_config(i2c_inst_t *i2c_inst, uint8_t *config){
+
+    return mpu6050_read_reg(
+        i2c_inst,
+        MPU6050_ACCEL_CONFIG_REG,
+        config
+    );
+}
+
+int mpu6050_read_gyro_config(i2c_inst_t *i2c_inst, uint8_t *config){
+
+    return mpu6050_read_reg(
+        i2c_inst,
+        MPU6050_GYRO_CONFIG_REG,
+        config
+    );
+}
+
 int mpu6050_read_gyro_raw(i2c_inst_t *i2c_inst, mpu6050_vec16_t *gyro){
 
     if (gyro==NULL)
