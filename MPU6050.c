@@ -7,12 +7,13 @@ static int mpu6050_write_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t value);
 static int mpu6050_read_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *resp);
 static int mpu6050_read_regs(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *data, size_t len);
 
-const char *MPU6050_STATUS_STRINGS[MPU6050_STATUS_COUNT] = {
+const char * const MPU6050_STATUS_STRINGS[MPU6050_STATUS_COUNT] = {
     "!OK",
     "!WRITE",
     "!READ",
     "!INIT",
-    "!NULL"
+    "!NULL",
+    "!ARG"
 };
 
 
@@ -114,7 +115,7 @@ int mpu6050_read_accel_raw(i2c_inst_t *i2c_inst, mpu6050_vec16_t *accel)
 int mpu6050_set_accel_range(i2c_inst_t *i2c_inst, uint8_t range){
 
     if (range > MPU6050_ACCEL_RANGE_16G){
-        return MPU6050_READ_ERROR;
+        return MPU6050_INVALID_ARG;
     }
 
     uint8_t config = 0;
@@ -149,7 +150,7 @@ int mpu6050_set_accel_range(i2c_inst_t *i2c_inst, uint8_t range){
 int mpu6050_set_gyro_range(i2c_inst_t *i2c_inst, uint8_t range){
 
     if (range > MPU6050_GYRO_RANGE_2000DPS){
-        return MPU6050_READ_ERROR;
+        return MPU6050_INVALID_ARG;
     }
 
     uint8_t config = 0;
@@ -183,20 +184,32 @@ int mpu6050_set_gyro_range(i2c_inst_t *i2c_inst, uint8_t range){
 
 int mpu6050_read_accel_config(i2c_inst_t *i2c_inst, uint8_t *config){
 
-    return mpu6050_read_reg(
+    int status = mpu6050_read_reg(
         i2c_inst,
         MPU6050_ACCEL_CONFIG_REG,
         config
     );
+
+    if(status != MPU6050_OK){
+        return status;
+    }
+
+    return MPU6050_OK;
 }
 
 int mpu6050_read_gyro_config(i2c_inst_t *i2c_inst, uint8_t *config){
 
-    return mpu6050_read_reg(
+    int status = mpu6050_read_reg(
         i2c_inst,
         MPU6050_GYRO_CONFIG_REG,
         config
     );
+
+    if(status != MPU6050_OK){
+        return status;
+    }
+
+    return MPU6050_OK;
 }
 
 int mpu6050_read_gyro_raw(i2c_inst_t *i2c_inst, mpu6050_vec16_t *gyro){
@@ -223,6 +236,41 @@ int mpu6050_read_gyro_raw(i2c_inst_t *i2c_inst, mpu6050_vec16_t *gyro){
 
     return MPU6050_OK;
 }
+
+int mpu6050_set_mot_thres(i2c_inst_t *i2c_inst, uint8_t thres){
+
+    int status = mpu6050_write_reg(
+        i2c_inst,
+        MPU6050_MOT_THR_REG,
+        thres
+    );
+
+    if(status != MPU6050_OK){
+        return status;
+    }
+
+    return MPU6050_OK;
+}
+
+
+int mpu6050_read_mot_thres(i2c_inst_t *i2c_inst, uint8_t *thres_reg){
+
+    int status = mpu6050_read_reg(
+        i2c_inst,
+        MPU6050_MOT_THR_REG,
+        thres_reg
+    );
+    
+
+    if(status != MPU6050_OK){
+        return status;
+    }
+
+    return MPU6050_OK;
+
+}
+
+
 /*! \brief General use function to write to an MPU6050 Register
  *
  * \sa mpu6050_write_reg
@@ -231,6 +279,10 @@ int mpu6050_read_gyro_raw(i2c_inst_t *i2c_inst, mpu6050_vec16_t *gyro){
  * \param value Data which is written to MPU6050 Register
 */
 static int mpu6050_write_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t value){
+
+    if (i2c_inst == NULL) {
+        return MPU6050_NULL_PTR_ERROR;
+    }
 
     uint8_t msg[2] = {reg, value};
 
@@ -257,6 +309,10 @@ static int mpu6050_write_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t value){
 */
 static int mpu6050_read_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *resp){
 
+    if (i2c_inst == NULL) {
+        return MPU6050_NULL_PTR_ERROR;
+    }
+    
     if (resp == NULL)
         return MPU6050_NULL_PTR_ERROR;
 

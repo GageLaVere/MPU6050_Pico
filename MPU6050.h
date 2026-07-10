@@ -2,6 +2,10 @@
  *
  * \brief MPU6050 API header created for the RPI Pico 2w (2350)
  */
+
+#ifndef MPU6050_H
+#define MPU6050_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -42,6 +46,8 @@
 #define MPU6050_ACCEL_CONFIG_REG 0x1C
 #define MPU6050_GYRO_CONFIG_REG  0x1B
 
+#define MPU6050_MOT_THR_REG 0x1F
+
 #define MPU6050_ACCEL_RANGE_2G   0
 #define MPU6050_ACCEL_RANGE_4G   1
 #define MPU6050_ACCEL_RANGE_8G   2
@@ -58,36 +64,50 @@
 #define MPU6050_GYRO_CONFIG_FS_SEL_SHIFT 3
 #define MPU6050_GYRO_CONFIG_FS_SEL_MASK  0x18
 
+/*! \brief Function which reads motion detection threshold
+ * \sa mpu6050_read_mot_thres
+ * \param i2c_inst Pico2W i2c instance
+ * \param thres_reg    Buffer to hold motion threshold setting (0-255)
+*/
+int mpu6050_read_mot_thres(i2c_inst_t *i2c_inst, uint8_t *thres_reg);
+
+/*! \brief Function which sets the motion detection threshold (0-255)
+ *  Intended to be used with #defined ranges
+ * \sa mpu6050_set_mot_thres
+ * \param i2c_inst Pico2W i2c instance
+ * \param thres    Threshold to set (0-255)
+*/
+int mpu6050_set_mot_thres(i2c_inst_t *i2c_inst, uint8_t thres);
 
 /*! \brief Function which sets the accel range to: ±2g, ±4g, ±8g, ±16g
  *  Intended to be used with #defined ranges
- * \sa mpu6050_init
+ * \sa mpu6050_set_accel_range
  * \param i2c_inst Pico2W i2c instance
- * \param accel    MPU6050 accel instance
+ * \param range    MPU6050 accel instance
 */
 int mpu6050_set_accel_range(i2c_inst_t *i2c_inst, uint8_t range);
 
 /*! \brief Function which sets the gyro range ±250, ±500, ±1000, ±2000 deg/s
  *  Intended to be used with #defined ranges
- * \sa mpu6050_init
+ * \sa mpu6050_set_gyro_range
  * \param i2c_inst Pico2W i2c instance
- * \param accel    MPU6050 gyro instance
+ * \param range    MPU6050 gyro range
 */
 int mpu6050_set_gyro_range(i2c_inst_t *i2c_inst, uint8_t range);
 
 /*! \brief Function which reads the accel range
  *  
- * \sa mpu6050_init
+ * \sa mpu6050_read_accel_config
  * \param i2c_inst Pico2W i2c instance
- * \param accel    MPU6050 accel instance
+ * \param config    MPU6050 accel config buffer
 */
 int mpu6050_read_accel_config(i2c_inst_t *i2c_inst, uint8_t *config);
 
 /*! \brief Function which reads the gyro range
  * 
- * \sa mpu6050_init
+ * \sa mpu6050_read_gyro_config
  * \param i2c_inst Pico2W i2c instance
- * \param accel    MPU6050 gyro instance
+ * \param config    MPU6050 gyro buffer
 */
 int mpu6050_read_gyro_config(i2c_inst_t *i2c_inst, uint8_t *config);
 
@@ -101,6 +121,7 @@ typedef enum {
     MPU6050_READ_ERROR,
     MPU6050_INIT_ERROR,
     MPU6050_NULL_PTR_ERROR,
+    MPU6050_INVALID_ARG,
     MPU6050_STATUS_COUNT
 } mpu6050_status_t;
 
@@ -119,15 +140,15 @@ extern const char *MPU6050_STATUS_STRINGS[MPU6050_STATUS_COUNT];
 
 /*! \brief Function which reads all 3 accels on the MPU6050
  *
- * \sa mpu6050_init
+ * \sa mpu6050_read_accel_raw
  * \param i2c_inst Pico2W i2c instance
  * \param accel    MPU6050 accel instance
 */
 int mpu6050_read_accel_raw(i2c_inst_t *i2c_inst, mpu6050_vec16_t *accel);
 
-/*! \brief Function which reads all 3 accels on the MPU6050
+/*! \brief Function which reads all 3 gyros on the MPU6050
  *
- * \sa mpu6050_init
+ * \sa mpu6050_read_gyro_raw
  * \param i2c_inst Pico2W i2c instance
  * \param accel    MPU6050 gyro instance
 */
@@ -178,3 +199,5 @@ int mpu6050_read_temp_raw(i2c_inst_t *i2c_inst, int16_t *raw_temp);
  * \return Status returned by MPU6050 driver
 */
 int mpu6050_read_smplrate(i2c_inst_t *i2c_inst, uint8_t *smplrate);
+
+#endif

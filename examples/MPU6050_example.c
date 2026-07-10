@@ -8,8 +8,8 @@
 #define I2C_PORT i2c0
 #define I2C_SDA 8
 #define I2C_SCL 9
-static void init_i2c(void);
 
+static void init_i2c(void);
 
 
 int main(){
@@ -18,10 +18,50 @@ int main(){
 
     sleep_ms(2000); // gives USB serial time to connect
 
+    
+    //START MPU_INIT
+
+
     int mpu6050_init_response = mpu6050_init(I2C_PORT);
     printf("MPU Init Response: %s (%d)\n", MPU6050_STATUS_STRINGS[mpu6050_init_response], mpu6050_init_response);
 
+
+    //START MOTION DETECTION
+
+    printf("Detecting motion...");
+
+    uint8_t thres_to_set = {1};
+    int thres_status = mpu6050_set_mot_thres(I2C_PORT, thres_to_set);
+
+    if (thres_status != MPU6050_OK){
+            printf("MPU6050 motion threshold set error: %s (%d)\n",
+            MPU6050_STATUS_STRINGS[thres_status],
+            thres_status);
+    } else{
+        printf("Status set to: %d\n", thres_to_set);
+    }
+    
+    uint8_t thres_read_reg = {0};
+
+    int read_thres_status = mpu6050_read_mot_thres(I2C_PORT, &thres_read_reg);
+
+    if (read_thres_status != MPU6050_OK) {
+        printf("MPU6050 motion threshold read error: %s (%d)\n",
+            MPU6050_STATUS_STRINGS[read_thres_status],
+            read_thres_status);
+    } else {
+        printf("Motion threshold read: %d\n", thres_read_reg);
+    }
+    
+
+
+    //START WHILE_LOOP
+
+
     while (true) {
+
+        //START WHO_AM_I
+
         uint8_t who_am_i = 0;
         int who_am_i_status = mpu6050_read_who_am_i(I2C_PORT, &who_am_i);
 
@@ -30,6 +70,8 @@ int main(){
         } else {
             printf("WHO_AM_I = 0x%02X (%d)\n", who_am_i, who_am_i);
         }
+
+        //START SAMPLE RATE
 
         uint8_t smplrate = 0;
         int smplrate_status = mpu6050_read_smplrate(I2C_PORT, &smplrate);
@@ -41,6 +83,10 @@ int main(){
         
         }
     
+
+        //START MPU_TEMP
+
+
         float mpu_temp = 0.0f;
         int mpu_temp_status = mpu6050_read_temp(I2C_PORT, &mpu_temp);
 
@@ -50,6 +96,10 @@ int main(){
             printf("MPU6050 Temp: %.2f\n", mpu_temp);
         
         }
+
+
+        //START MPU_RAW_TEMP
+
 
         int16_t mpu_raw_temp = 0;
 
@@ -61,6 +111,10 @@ int main(){
             printf("MPU6050 Raw Temp: %d\n", mpu_raw_temp);
         
         }
+
+
+        //START MPU_READ_ACCELS
+
 
         mpu6050_vec16_t accel = {0};
 
@@ -74,6 +128,10 @@ int main(){
             printf("Accel raw: X=%d Y=%d Z=%d\n", accel.x, accel.y, accel.z);
         }
 
+
+        //START MPU_READ_GYROS
+
+
         mpu6050_vec16_t gyro = {0};
 
         int gyro_status = mpu6050_read_gyro_raw(I2C_PORT, &gyro);
@@ -85,7 +143,6 @@ int main(){
         } else{
             printf("Gyro raw: X=%d Y=%d Z=%d\n", gyro.x, gyro.y, gyro.z);
         }
-
 
         sleep_ms(1000);
     }
