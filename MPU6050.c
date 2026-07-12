@@ -16,6 +16,115 @@ const char * const MPU6050_STATUS_STRINGS[MPU6050_STATUS_COUNT] = {
     "!ARG"
 };
 
+/*! \brief General use function to write to an MPU6050 Register
+ *
+ * \sa mpu6050_write_reg
+ * \param i2c_inst Pico2W i2c instance
+ * \param reg MPU6050 Register which is written to
+ * \param value Data which is written to MPU6050 Register
+*/
+static int mpu6050_write_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t value){
+
+    if (i2c_inst == NULL) {
+        return MPU6050_NULL_PTR_ERROR;
+    }
+
+    uint8_t msg[2] = {reg, value};
+
+    int byte_count = i2c_write_blocking(
+        i2c_inst,
+        MPU6050_DEFAULT_I2C_ADDRESS,
+        msg,
+        2,
+        false
+    );
+
+    if (byte_count != 2) {
+        return MPU6050_WRITE_ERROR;
+    }
+
+    return MPU6050_OK;
+}
+
+/*! \brief General use function to read from an MPU6050 Register
+ *
+ * \sa mpu6050_read_reg
+ * \param i2c_inst Pico2W i2c instance
+ * \param reg MPU6050 Register which is read from
+*/
+static int mpu6050_read_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *resp){
+
+    if (i2c_inst == NULL) {
+        return MPU6050_NULL_PTR_ERROR;
+    }
+    
+    if (resp == NULL)
+        return MPU6050_NULL_PTR_ERROR;
+
+    int byte_count = i2c_write_blocking(
+        i2c_inst,
+        MPU6050_DEFAULT_I2C_ADDRESS,
+        &reg,
+        1,
+        true
+    );
+
+    if (byte_count != 1) {
+        return MPU6050_WRITE_ERROR;
+    }
+
+    byte_count = i2c_read_blocking(
+        i2c_inst,
+        MPU6050_DEFAULT_I2C_ADDRESS,
+        resp,
+        1,
+        false
+    );
+
+    if (byte_count != 1) {
+        return MPU6050_READ_ERROR;
+    }
+
+    return MPU6050_OK;
+}
+
+/*! \brief General use function to read from an MPU6050 Register
+ *
+ * \sa mpu6050_read_reg
+ * \param i2c_inst Pico2W i2c instance
+ * \param reg MPU6050 Register which is read from
+*/
+static int mpu6050_read_regs(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *data, size_t len){
+    
+    if (i2c_inst == NULL || data == NULL || len == 0) 
+        return MPU6050_NULL_PTR_ERROR;
+
+
+    int status = i2c_write_blocking(
+        i2c_inst,
+        MPU6050_DEFAULT_I2C_ADDRESS,
+        &reg,
+        1,
+        true
+    );
+
+    if (status != 1)
+        return MPU6050_WRITE_ERROR;
+
+
+    status = i2c_read_blocking(
+        i2c_inst,
+        MPU6050_DEFAULT_I2C_ADDRESS,
+        data,
+        len,
+        false
+    );
+
+    if (status != (int)len)
+        return MPU6050_READ_ERROR;
+
+    return MPU6050_OK;
+}
 
 int mpu6050_init(i2c_inst_t *i2c_inst){
 
@@ -270,113 +379,56 @@ int mpu6050_read_mot_thres(i2c_inst_t *i2c_inst, uint8_t *thres_reg){
 
 }
 
+int mpu6050_read_sample_raw(i2c_inst_t *i2c_inst, mpu6050_sample_raw_t *sample){
 
-/*! \brief General use function to write to an MPU6050 Register
- *
- * \sa mpu6050_write_reg
- * \param i2c_inst Pico2W i2c instance
- * \param reg MPU6050 Register which is written to
- * \param value Data which is written to MPU6050 Register
-*/
-static int mpu6050_write_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t value){
-
-    if (i2c_inst == NULL) {
+    if (sample == NULL) {
         return MPU6050_NULL_PTR_ERROR;
     }
 
-    uint8_t msg[2] = {reg, value};
+    uint8_t sample_data[14] = {0};
 
-    int byte_count = i2c_write_blocking(
+    int status = mpu6050_read_regs(
         i2c_inst,
-        MPU6050_DEFAULT_I2C_ADDRESS,
-        msg,
-        2,
-        false
+        MPU6050_ACCEL_XOUT_H_REG,
+        sample_data,
+        sizeof(sample_data)
     );
 
-    if (byte_count != 2) {
-        return MPU6050_WRITE_ERROR;
+    if (status != MPU6050_OK) {
+        return status;
     }
 
-    return MPU6050_OK;
-}
+    mpu6050_sample_raw_t result = {0};
 
-/*! \brief General use function to read from an MPU6050 Register
- *
- * \sa mpu6050_read_reg
- * \param i2c_inst Pico2W i2c instance
- * \param reg MPU6050 Register which is read from
-*/
-static int mpu6050_read_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *resp){
+    result.accel.x =
+        (int16_t)(((uint16_t)sample_data[0] << 8)
+                | sample_data[1]);
 
-    if (i2c_inst == NULL) {
-        return MPU6050_NULL_PTR_ERROR;
-    }
-    
-    if (resp == NULL)
-        return MPU6050_NULL_PTR_ERROR;
+    result.accel.y =
+        (int16_t)(((uint16_t)sample_data[2] << 8)
+                | sample_data[3]);
 
-    int byte_count = i2c_write_blocking(
-        i2c_inst,
-        MPU6050_DEFAULT_I2C_ADDRESS,
-        &reg,
-        1,
-        true
-    );
+    result.accel.z = 
+        (int16_t)(((uint16_t)sample_data[4] << 8)
+                | sample_data[5]);
 
-    if (byte_count != 1) {
-        return MPU6050_WRITE_ERROR;
-    }
+    result.temp = 
+        (int16_t)(((uint16_t)sample_data[6] << 8)
+                | sample_data[7]);
 
-    byte_count = i2c_read_blocking(
-        i2c_inst,
-        MPU6050_DEFAULT_I2C_ADDRESS,
-        resp,
-        1,
-        false
-    );
+    result.gyro.x =
+        (int16_t)(((uint16_t)sample_data[8] << 8)
+                | sample_data[9]);
 
-    if (byte_count != 1) {
-        return MPU6050_READ_ERROR;
-    }
+    result.gyro.y =
+        (int16_t)(((uint16_t)sample_data[10] << 8)
+                | sample_data[11]);
 
-    return MPU6050_OK;
-}
+    result.gyro.z = 
+        (int16_t)(((uint16_t)sample_data[12] << 8)
+                | sample_data[13]);
 
-/*! \brief General use function to read from an MPU6050 Register
- *
- * \sa mpu6050_read_reg
- * \param i2c_inst Pico2W i2c instance
- * \param reg MPU6050 Register which is read from
-*/
-static int mpu6050_read_regs(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *data, size_t len){
-    
-    if (i2c_inst == NULL || data == NULL || len == 0) 
-        return MPU6050_NULL_PTR_ERROR;
-
-
-    int status = i2c_write_blocking(
-        i2c_inst,
-        MPU6050_DEFAULT_I2C_ADDRESS,
-        &reg,
-        1,
-        true
-    );
-
-    if (status != 1)
-        return MPU6050_WRITE_ERROR;
-
-
-    status = i2c_read_blocking(
-        i2c_inst,
-        MPU6050_DEFAULT_I2C_ADDRESS,
-        data,
-        len,
-        false
-    );
-
-    if (status != (int)len)
-        return MPU6050_READ_ERROR;
+    *sample = result;
 
     return MPU6050_OK;
 }
