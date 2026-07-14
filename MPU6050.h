@@ -22,6 +22,10 @@
 
 #define MPU6050_SMPLRATE_REG 0x19
 
+#define MPU6050_CONFIG_REG           0x1A
+#define MPU6050_CONFIG_DLPF_MASK     0x07
+#define MPU6050_CONFIG_DLPF_SHIFT    0
+
 #define MPU6050_TEMPH_REG 0x41
 #define MPU6050_TEMPL_REG 0x42
 
@@ -98,9 +102,24 @@ typedef struct {
     mpu6050_vec16_t gyro;
 } mpu6050_sample_raw_t;
 
-int mpu6050_read_sample_raw(
+int mpu6050_read_sample_raw(i2c_inst_t *i2c_inst,mpu6050_sample_raw_t *sample);
+
+/*! \brief Sets the MPU6050 gyroscope full-scale range
+ *
+ * Updates the FS_SEL field in the GYRO_CONFIG register while preserving
+ * the other register bits.
+ *
+ * \param i2c_inst Pico 2 W I2C instance
+ * \param range Gyroscope range selection
+ *
+ * \return MPU6050_OK on success
+ * \return MPU6050_INVALID_ARG if range is invalid
+ * \return MPU6050_READ_ERROR if GYRO_CONFIG cannot be read
+ * \return MPU6050_WRITE_ERROR if GYRO_CONFIG cannot be written
+ */
+int mpu6050_set_gyro_range(
     i2c_inst_t *i2c_inst,
-    mpu6050_sample_raw_t *sample
+    uint8_t range
 );
 
 /*! \brief Function which reads motion detection threshold
@@ -207,6 +226,14 @@ int mpu6050_read_temp(i2c_inst_t *i2c_inst, float *mpu_temp);
  */
 int mpu6050_read_temp_raw(i2c_inst_t *i2c_inst, int16_t *raw_temp);
 
+/*! \brief Sets the MPU6050 sample-rate divider
+ *
+ * \param i2c_inst Pico 2 W I2C instance
+ * \param divider Value written to the SMPLRT_DIV register
+ * \return MPU6050 driver status
+ */
+int mpu6050_set_smplrate(i2c_inst_t *i2c_inst, uint8_t divider);
+
 /*! \brief Reads Sample Rate register 
  * 
  * \details This register specifies the divider from 
@@ -217,5 +244,24 @@ int mpu6050_read_temp_raw(i2c_inst_t *i2c_inst, int16_t *raw_temp);
  * \return Status returned by MPU6050 driver
 */
 int mpu6050_read_smplrate(i2c_inst_t *i2c_inst, uint8_t *smplrate);
+
+/*! \brief Sets the MPU6050 digital low-pass filter configuration
+ *
+ * Updates the DLPF_CFG field in the CONFIG register while preserving
+ * the other register bits.
+ *
+ * \param i2c_inst Pico 2 W I2C instance
+ * \param dlpf_config DLPF configuration value from 0 to 7
+ */
+int mpu6050_set_dlpf(i2c_inst_t *i2c_inst,uint8_t dlpf_config);
+
+/*! \brief Reads the MPU6050 digital low-pass filter configuration
+ *
+ * Reads the CONFIG register and extracts the DLPF_CFG field.
+ *
+ * \param i2c_inst Pico 2 W I2C instance
+ * \param dlpf_config Output pointer for the DLPF configuration value
+ */
+int mpu6050_read_dlpf(i2c_inst_t *i2c_inst, uint8_t *dlpf_config);
 
 #endif

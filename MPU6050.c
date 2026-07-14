@@ -3,9 +3,6 @@
  * \brief MPU6050 API source created for the RPI Pico 2w (2350)
  */
 #include "MPU6050.h"
-static int mpu6050_write_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t value);
-static int mpu6050_read_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *resp);
-static int mpu6050_read_regs(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *data, size_t len);
 
 const char * const MPU6050_STATUS_STRINGS[MPU6050_STATUS_COUNT] = {
     "!OK",
@@ -23,112 +20,143 @@ const char * const MPU6050_STATUS_STRINGS[MPU6050_STATUS_COUNT] = {
  * \param reg MPU6050 Register which is written to
  * \param value Data which is written to MPU6050 Register
 */
-static int mpu6050_write_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t value){
-
+static int mpu6050_write_reg(
+    i2c_inst_t *i2c_inst,
+    uint8_t reg,
+    uint8_t value
+) {
     if (i2c_inst == NULL) {
         return MPU6050_NULL_PTR_ERROR;
     }
 
-    uint8_t msg[2] = {reg, value};
+    uint8_t data[2] = {
+        reg,
+        value
+    };
 
-    int byte_count = i2c_write_blocking(
-        i2c_inst,
-        MPU6050_DEFAULT_I2C_ADDRESS,
-        msg,
-        2,
-        false
-    );
-
-    if (byte_count != 2) {
-        return MPU6050_WRITE_ERROR;
-    }
-
-    return MPU6050_OK;
-}
-
-/*! \brief General use function to read from an MPU6050 Register
- *
- * \sa mpu6050_read_reg
- * \param i2c_inst Pico2W i2c instance
- * \param reg MPU6050 Register which is read from
-*/
-static int mpu6050_read_reg(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *resp){
-
-    if (i2c_inst == NULL) {
-        return MPU6050_NULL_PTR_ERROR;
-    }
-    
-    if (resp == NULL)
-        return MPU6050_NULL_PTR_ERROR;
-
-    int byte_count = i2c_write_blocking(
-        i2c_inst,
-        MPU6050_DEFAULT_I2C_ADDRESS,
-        &reg,
-        1,
-        true
-    );
-
-    if (byte_count != 1) {
-        return MPU6050_WRITE_ERROR;
-    }
-
-    byte_count = i2c_read_blocking(
-        i2c_inst,
-        MPU6050_DEFAULT_I2C_ADDRESS,
-        resp,
-        1,
-        false
-    );
-
-    if (byte_count != 1) {
-        return MPU6050_READ_ERROR;
-    }
-
-    return MPU6050_OK;
-}
-
-/*! \brief General use function to read from an MPU6050 Register
- *
- * \sa mpu6050_read_reg
- * \param i2c_inst Pico2W i2c instance
- * \param reg MPU6050 Register which is read from
-*/
-static int mpu6050_read_regs(i2c_inst_t *i2c_inst, uint8_t reg, uint8_t *data, size_t len){
-    
-    if (i2c_inst == NULL || data == NULL || len == 0) 
-        return MPU6050_NULL_PTR_ERROR;
-
-
-    int status = i2c_write_blocking(
-        i2c_inst,
-        MPU6050_DEFAULT_I2C_ADDRESS,
-        &reg,
-        1,
-        true
-    );
-
-    if (status != 1)
-        return MPU6050_WRITE_ERROR;
-
-
-    status = i2c_read_blocking(
+    int bytes_written = i2c_write_blocking(
         i2c_inst,
         MPU6050_DEFAULT_I2C_ADDRESS,
         data,
-        len,
+        sizeof(data),
         false
     );
 
-    if (status != (int)len)
-        return MPU6050_READ_ERROR;
+    if (bytes_written != (int)sizeof(data)) {
+        return MPU6050_WRITE_ERROR;
+    }
 
     return MPU6050_OK;
 }
 
-int mpu6050_init(i2c_inst_t *i2c_inst){
+/*! \brief General use function to read from an MPU6050 Register
+ *
+ * \sa mpu6050_read_reg
+ * \param i2c_inst Pico2W i2c instance
+ * \param reg MPU6050 Register which is read from
+*/
+static int mpu6050_read_reg(i2c_inst_t *i2c_inst,uint8_t reg,uint8_t *resp) {
 
+    if (i2c_inst == NULL || resp == NULL) {
+        return MPU6050_NULL_PTR_ERROR;
+    }
+
+    int bytes_written = i2c_write_blocking(
+        i2c_inst,
+        MPU6050_DEFAULT_I2C_ADDRESS,
+        &reg,
+        1,
+        true
+    );
+
+    if (bytes_written != 1) {
+        return MPU6050_WRITE_ERROR;
+    }
+
+    uint8_t value = 0;
+
+    int bytes_read = i2c_read_blocking(
+        i2c_inst,
+        MPU6050_DEFAULT_I2C_ADDRESS,
+        &value,
+        1,
+        false
+    );
+
+    if (bytes_read != 1) {
+        return MPU6050_READ_ERROR;
+    }
+
+    *resp = value;
+
+    return MPU6050_OK;
+}
+
+/*! \brief General use function to read from an MPU6050 Register
+ *
+ * \sa mpu6050_read_reg
+ * \param i2c_inst Pico2W i2c instance
+ * \param reg MPU6050 Register which is read from
+*/
+static int mpu6050_read_regs(i2c_inst_t *i2c_inst, uint8_t start_reg,
+                            uint8_t *buffer, size_t length) {
+
+    if (i2c_inst == NULL || buffer == NULL) {
+        return MPU6050_NULL_PTR_ERROR;
+    }
+
+    if (length == 0) {
+        return MPU6050_INVALID_ARG;
+    }
+
+    int bytes_written = i2c_write_blocking(
+        i2c_inst,
+        MPU6050_DEFAULT_I2C_ADDRESS,
+        &start_reg,
+        1,
+        true
+    );
+
+    if (bytes_written != 1) {
+        return MPU6050_WRITE_ERROR;
+    }
+
+    int bytes_read = i2c_read_blocking(
+        i2c_inst,
+        MPU6050_DEFAULT_I2C_ADDRESS,
+        buffer,
+        length,
+        false
+    );
+
+    if (bytes_read != (int)length) {
+        return MPU6050_READ_ERROR;
+    }
+
+    return MPU6050_OK;
+}
+
+int mpu6050_init(i2c_inst_t *i2c_inst) {
+    if (i2c_inst == NULL) {
+        return MPU6050_NULL_PTR_ERROR;
+    }
+
+    // Reset all MPU6050 registers to their default state.
     int status = mpu6050_write_reg(
+        i2c_inst,
+        MPU6050_PWR_MGMT_1_REG,
+        0x80
+    );
+
+    if (status != MPU6050_OK) {
+        return MPU6050_INIT_ERROR;
+    }
+
+    // Allow the device reset to complete.
+    sleep_ms(100);
+
+    // Wake the device and select the X-axis gyro PLL clock.
+    status = mpu6050_write_reg(
         i2c_inst,
         MPU6050_PWR_MGMT_1_REG,
         0x01
@@ -137,6 +165,9 @@ int mpu6050_init(i2c_inst_t *i2c_inst){
     if (status != MPU6050_OK) {
         return MPU6050_INIT_ERROR;
     }
+
+    // Allow sensor outputs to begin updating.
+    sleep_ms(100);
 
     return MPU6050_OK;
 }
@@ -379,6 +410,14 @@ int mpu6050_read_mot_thres(i2c_inst_t *i2c_inst, uint8_t *thres_reg){
 
 }
 
+int mpu6050_set_smplrate(i2c_inst_t *i2c_inst, uint8_t divider) {
+    return mpu6050_write_reg(
+        i2c_inst,
+        MPU6050_SMPLRATE_REG,
+        divider
+    );
+}
+
 int mpu6050_read_sample_raw(i2c_inst_t *i2c_inst, mpu6050_sample_raw_t *sample){
 
     if (sample == NULL) {
@@ -429,6 +468,59 @@ int mpu6050_read_sample_raw(i2c_inst_t *i2c_inst, mpu6050_sample_raw_t *sample){
                 | sample_data[13]);
 
     *sample = result;
+
+    return MPU6050_OK;
+}
+
+
+int mpu6050_set_dlpf(i2c_inst_t *i2c_inst,uint8_t dlpf_config){
+
+    if (dlpf_config > 7) {
+        return MPU6050_INVALID_ARG;
+    }
+
+    uint8_t config = 0;
+
+    int status = mpu6050_read_reg(
+        i2c_inst,
+        MPU6050_CONFIG_REG,
+        &config
+    );
+
+    if (status != MPU6050_OK) {
+        return status;
+    }
+
+    config =
+        (config & (uint8_t)~MPU6050_CONFIG_DLPF_MASK) |
+        ((dlpf_config << MPU6050_CONFIG_DLPF_SHIFT) &
+         MPU6050_CONFIG_DLPF_MASK);
+
+    return mpu6050_write_reg(i2c_inst, MPU6050_CONFIG_REG, config);
+}
+
+
+int mpu6050_read_dlpf(i2c_inst_t *i2c_inst, uint8_t *dlpf_config){
+
+    if (dlpf_config == NULL) {
+        return MPU6050_NULL_PTR_ERROR;
+    }
+
+    uint8_t config = 0;
+
+    int status = mpu6050_read_reg(
+        i2c_inst,
+        MPU6050_CONFIG_REG,
+        &config
+    );
+
+    if (status != MPU6050_OK) {
+        return status;
+    }
+
+    *dlpf_config =
+        (config & MPU6050_CONFIG_DLPF_MASK) >>
+        MPU6050_CONFIG_DLPF_SHIFT;
 
     return MPU6050_OK;
 }
